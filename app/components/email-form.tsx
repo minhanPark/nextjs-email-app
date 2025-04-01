@@ -13,6 +13,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { sendMail } from "../actions/send-mail";
 
 const schema = z.object({
   email: z.string().email({ message: "올바른 이메일이 아닙니다." }),
@@ -25,6 +26,7 @@ export function EmailForm() {
     register,
     handleSubmit,
     formState: { errors },
+    setError,
   } = useForm<Schema>({
     resolver: zodResolver(schema),
     defaultValues: {
@@ -32,8 +34,20 @@ export function EmailForm() {
     },
   });
 
-  const onValid: SubmitHandler<Schema> = (data) => {
-    console.log("성공", data);
+  const onValid: SubmitHandler<Schema> = async (data) => {
+    try {
+      const result = await sendMail(data);
+      if (result.isOk) {
+        alert("메일이 성공적으로 보내졌습니다.");
+      } else {
+        setError("email", { message: result.error });
+      }
+    } catch {
+      console.log("함수 실행 중에 에러 발생");
+      setError("email", {
+        message: "서버와의 통신에 실패했습니다. 다시 시도해주세요.",
+      });
+    }
   };
 
   const errorMessage = errors.email?.message;
